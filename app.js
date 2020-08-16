@@ -16,11 +16,6 @@ function dropDwnGen(){
     });
 };
 
-function optionChanged(sampleID){
-    console.log(sampleID);
-    buildplot(sampleID);
-}
-
 function buildplot(sampleID){
     d3.json("../data/samples.json").then((jsonData) => {
         const samples = jsonData.samples;
@@ -32,8 +27,8 @@ function buildplot(sampleID){
         console.log(filteredId);
 
         const sampleValues = filteredId[0].sample_values.slice(0,10).reverse();
-        const otuValues = filteredId[0].otu_ids.slice(0,10);
-        const genusValues = filteredId[0].otu_labels.slice(0,10);
+        const otuValues = filteredId[0].otu_ids.slice(0,10).reverse();
+        const genusValues = filteredId[0].otu_labels.slice(0,10).reverse();
         const genusArr = genusValues.map(genvalue =>
             genvalue.split(";").slice(-1)
         )
@@ -51,7 +46,7 @@ function buildplot(sampleID){
         })
         console.log(otuGenus);
 
-        //bar plot
+        //bar plot with selection
 
         const trace = {
             x: sampleValues,
@@ -79,23 +74,26 @@ function buildplot(sampleID){
         }
 
         Plotly.newPlot("bar2",data,layout);
+
+        //bar plot 
     });    
 };
+
+function optionChanged(sampleID){
+    console.log(sampleID);
+    buildplot(sampleID);
+}
 
 // init function to render a default chart
 
 function init(){
     d3.json("../data/samples.json").then((jsonData) => {
-        let sampleID = jsonData.samples[0].id;
-        console.log(sampleID);
-
-        buildplot(sampleID);
-        
+        let initialID = jsonData.samples[0].id;
+        console.log(initialID);
+        buildplot(initialID);    
     });
-}
-
+};
 
 dropDwnGen();
-optionChanged();
 init();
 
