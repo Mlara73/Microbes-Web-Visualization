@@ -75,33 +75,96 @@ function buildplot(sampleID){
 
         Plotly.newPlot("bar2",data,layout);
 
-        //bar plot without selection
-        const otuIDArray = samples.map(sample =>
-            sample.otu_ids)
-        // console.log(otuIDArray);
+        // All subjects Bar Plot
+        const samplesUto = jsonData.samples;
+        const otusObject = {};
+        const genusObject = {};
+        samplesUto.forEach(sample => {
+            const otuIden = sample.otu_ids;
+            console.log(otuIden);
+            const sampleVal = sample.sample_values;
+            const genus = sample.otu_labels;
+            const genusVal = genus.map(genvalue => genvalue.split(";").slice(-1));
 
-        const sampleValuesArray = samples.map(sample =>
-            sample.sample_values);
-        // console.log(sampleValuesArray);
+            otuIden.forEach((id,i) =>{
+                if (id in otusObject){
+                otusObject[id].push(sampleVal[i]);
+                genusObject[id].push(genus[i]);
+                }
+                else{
+                    otusObject[id] = [sampleVal[i]];
+                    genusObject[id] = [genus[i]];
+                }
+            });
+        });
 
-        const otuSampleObject = {};
+        console.log(otusObject);
+        console.log(genusObject);
+
+        //reduce to aggregate sample_values by otu_id
+        const aggOtuObject = {};
+        Object.entries(otusObject).forEach(([key,value]) => {
+            const reducer = (accumulator, currentValue) => accumulator + currentValue;
+            const aggOtuValues = value.reduce(reducer);
+            if(key in aggOtuObject){
+                aggOtuObject[key].push(aggOtuValues);
+            }
+            else{
+                aggOtuObject[key] = aggOtuValues;
+            }
+        });
+        console.log(aggOtuObject);
+
+        //sort and slice aggOtuValues
+        const aggOtuArr = Object.entries(aggOtuObject);
+        const sortAggOtuArr = aggOtuArr.sort(function(a, b) {
+            return b[1] - a[1];
+        });
+        const sliceAggOtuArr = sortAggOtuArr.slice(0,10);
+        console.log(sliceAggOtuArr);
+
+        console.log(Object.entries(genusObject));
         
-        otuIDArray.forEach((otuSubject,index) => {
-
-            // console.log(otuSubject);
-            const sampleSubject = sampleValuesArray[index];
-
-            otuSubject.forEach((otuID,i) => {
-
-                        if (otuID in otuSampleObject){
-                            otuSampleObject[otuID].push(sampleSubject[i])
-                        }
-                        else {
-                            otuSampleObject[otuID] = [sampleSubject[i]];
-                        }
+        //adding Genus value within sliceAggOtuArr
+        sliceAggOtuArr.forEach(agg => {
+            Object.entries(genusObject).forEach(([key,value]) =>{
+                if (agg[0] === key) {
+                    agg.push(value[0]);
+                    const genusValue = value[0].split(";").slice(-1);
+                    agg.push(key + " : " + genusValue);
+                }
             })
         });
-        console.log(otuSampleObject);
+        console.log(sliceAggOtuArr);
+
+        //bar plot with selection
+
+        const trace2 = {
+            x: sliceAggOtuArr.map(agg => agg[1]).reverse(),
+            y: sliceAggOtuArr.map(agg => agg[3]).reverse(),
+            type: "bar",
+            orientation: "h",
+            text: sliceAggOtuArr.map(agg => agg[2]),
+        }
+        const data2 = [trace2];
+
+        layout2 = {
+            title: "Top 10 Bacteria - All Subjects",
+            xaxis: {tickfont: {
+                size: 12,
+            }},
+            yaxis: {tickfont: {
+                size: 8,
+            }},
+            margin: {
+                l: 100,
+                r: 100,
+                t: 30,
+                b: 20
+            }
+        }
+
+        Plotly.newPlot("bar1",data2,layout2);
     });    
 };
 
