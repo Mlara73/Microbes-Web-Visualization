@@ -57,7 +57,7 @@ function buildplot(sampleID){
         }
         const data = [trace];
 
-        layout = {
+        const layout = {
             title: "Top 10 Bacteria - Selected Subject",
             xaxis: {tickfont: {
                 size: 12,
@@ -117,6 +117,7 @@ function buildplot(sampleID){
 
         //sort and slice aggOtuValues
         const aggOtuArr = Object.entries(aggOtuObject);
+        console.log(aggOtuArr);
         const sortAggOtuArr = aggOtuArr.sort(function(a, b) {
             return b[1] - a[1];
         });
@@ -125,7 +126,7 @@ function buildplot(sampleID){
 
         console.log(Object.entries(genusObject));
         
-        //adding Genus value within sliceAggOtuArr
+        // adding Genus value within sliceAggOtuArr
         sliceAggOtuArr.forEach(agg => {
             Object.entries(genusObject).forEach(([key,value]) =>{
                 if (agg[0] === key) {
@@ -148,7 +149,7 @@ function buildplot(sampleID){
         }
         const data2 = [trace2];
 
-        layout2 = {
+        const layout2 = {
             title: "Top 10 Bacteria - All Subjects",
             xaxis: {tickfont: {
                 size: 12,
@@ -165,6 +166,84 @@ function buildplot(sampleID){
         }
 
         Plotly.newPlot("bar1",data2,layout2);
+
+        //Bubble Chart
+        console.log(filteredId);
+        const otuLabel = filteredId[0].otu_labels;
+        const otuFam = otuLabel.map(label =>
+            label.split(";").slice(0,5));
+        const famSampValues = filteredId[0].sample_values;
+        console.log(otuFam);
+        console.log(sampleValues);
+
+        const otuFamObject = {};
+        // loop within otuFam to build an object where fam : sample_value
+        otuFam.forEach((fam,i) =>{
+
+            // console.log(famSampValues[i]);
+            if (fam in otuFamObject){
+                otuFamObject[fam].push(famSampValues[i])
+            }
+            else{
+                otuFamObject[fam] = [famSampValues[i]];
+            }
+        });
+        console.log(otuFamObject);
+
+        //reduce sample_value by family
+        const aggFamObj = {};
+        Object.entries(otuFamObject).forEach(([key,value]) => {
+    
+            const famReducer = (accum, currentVal) => accum + currentVal;
+            const aggFamValues = value.reduce(famReducer);
+            // console.log(aggFamValues);
+            if (key in aggFamObj){
+                aggFamObj[key].push(aggFamValues);
+            }
+            else{
+                aggFamObj[key] = aggFamValues;
+            }
+        });
+        console.log(aggFamObj);
+
+        //sort aggFamObj
+
+        const sortFamArr = Object.entries(aggFamObj).sort((a,b) =>
+        {return b[1] - a[1]});
+        console.log(sortFamArr);
+
+        //create bubble chart
+        const x = sortFamArr.map(sortFam => sortFam[1]);
+        const y = sortFamArr.map(sortFam => sortFam[0]);
+        console.log(y);
+        const bubbleTrace = {
+            x: x,
+            y: y,
+            mode: 'markers',
+            marker: {size: x,
+            sizemode: 'area'},
+            text: y
+        }
+
+        const data3 = [bubbleTrace];
+
+        const layout3 = {
+            title: "Count of Bacteria - Selected Subject",
+            xaxis: {tickfont: {
+                size: 12,
+            }},
+            yaxis: {tickfont: {
+                size: 8,
+            }},
+            margin: {
+                l: 350,
+                r: 200,
+                t: 50,
+                b: 50
+            }
+        }
+
+        Plotly.newPlot("bubble",data3,layout3);
     });    
 };
 
