@@ -17,7 +17,7 @@ function dropDwnGen(){
 };
 
 function buildplot(sampleID){
-    d3.json("../data/samples.json").then((jsonData) => {
+    d3.json("data/samples.json").then((jsonData) => {
         const samples = jsonData.samples;
         // console.log(samples);
 
@@ -251,7 +251,7 @@ function buildplot(sampleID){
 };
 
 function demographicInfo(sampleID){
-    d3.json("../data/samples.json").then(res =>{
+    d3.json("data/samples.json").then(res =>{
         const metadataObj = res.metadata;
         console.log(metadataObj);
         const filteredMetaObj = metadataObj.filter(metaObj =>
