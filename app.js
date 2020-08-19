@@ -1,6 +1,6 @@
 // Initialize Selected Bar Chart
 function dropDwnGen(){
-    d3.json("../data/samples.json").then((jsonData) => {
+    d3.json("samples.json").then((jsonData) => {
         // console.log(jsonData);
     
         const samplesArray = jsonData.names;
@@ -79,13 +79,18 @@ function buildplot(sampleID){
         const samplesUto = jsonData.samples;
         const otusObject = {};
         const genusObject = {};
+        
+        //Loop over all subjects/samples
         samplesUto.forEach(sample => {
+            //otu_ids
             const otuIden = sample.otu_ids;
-            console.log(otuIden);
+            // sample_values
             const sampleVal = sample.sample_values;
+            //otu_labels and genus 
             const genus = sample.otu_labels;
             const genusVal = genus.map(genvalue => genvalue.split(";").slice(-1));
 
+            //Loop over each otu_id
             otuIden.forEach((id,i) =>{
                 if (id in otusObject){
                 otusObject[id].push(sampleVal[i]);
@@ -168,8 +173,9 @@ function buildplot(sampleID){
         Plotly.newPlot("bar1",data2,layout2);
 
         //Bubble Chart
-        console.log(filteredId);
+        //otu_labels for selected subject
         const otuLabel = filteredId[0].otu_labels;
+        // grab the family
         const otuFam = otuLabel.map(label =>
             label.split(";").slice(0,5));
         const famSampValues = filteredId[0].sample_values;
@@ -177,9 +183,8 @@ function buildplot(sampleID){
         console.log(sampleValues);
 
         const otuFamObject = {};
-        // loop within otuFam to build an object where fam : sample_value
+        // loop within otuFam/families to build an object where "family : sample_value"
         otuFam.forEach((fam,i) =>{
-
             // console.log(famSampValues[i]);
             if (fam in otuFamObject){
                 otuFamObject[fam].push(famSampValues[i])
@@ -193,7 +198,6 @@ function buildplot(sampleID){
         //reduce sample_value by family
         const aggFamObj = {};
         Object.entries(otuFamObject).forEach(([key,value]) => {
-    
             const famReducer = (accum, currentVal) => accum + currentVal;
             const aggFamValues = value.reduce(famReducer);
             // console.log(aggFamValues);
@@ -207,22 +211,21 @@ function buildplot(sampleID){
         console.log(aggFamObj);
 
         //sort aggFamObj
-
         const sortFamArr = Object.entries(aggFamObj).sort((a,b) =>
         {return b[1] - a[1]});
         console.log(sortFamArr);
 
         //create bubble chart
-        const x = sortFamArr.map(sortFam => sortFam[1]);
-        const y = sortFamArr.map(sortFam => sortFam[0]);
-        console.log(y);
+        const familyResult = sortFamArr.map(sortFam => sortFam[0]);
+        const sampleValueResult = sortFamArr.map(sortFam => sortFam[1]);
+        console.log(familyResult);
+
         const bubbleTrace = {
-            x: x,
-            y: y,
+            x: sampleValueResult,
+            y: familyResult,
             mode: 'markers',
-            marker: {size: x,
+            marker: {size: sampleValueResult,
             sizemode: 'area'},
-            text: y
         }
 
         const data3 = [bubbleTrace];
@@ -263,7 +266,7 @@ function demographicInfo(sampleID){
         const demographicInfoRef = d3.select("#sample-metadata");
 
         Object.entries(demographicInfo).forEach(([key,value]) =>{
-            const divElem = demographicInfoRef.append("div")
+            const divElem = demographicInfoRef.append("h5")
             divElem.text(`${key}:${value}`);
         })
 
@@ -290,4 +293,3 @@ function init(){
 
 dropDwnGen();
 init();
-
