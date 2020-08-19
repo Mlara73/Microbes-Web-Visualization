@@ -1,6 +1,6 @@
 // Initialize Selected Bar Chart
 function dropDwnGen(){
-    d3.json("samples.json").then((jsonData) => {
+    d3.json("data/samples.json").then((jsonData) => {
         // console.log(jsonData);
     
         const samplesArray = jsonData.names;
