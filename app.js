@@ -283,7 +283,7 @@ function optionChanged(sampleID){
 // init function to render a default chart
 
 function init(){
-    d3.json("../data/samples.json").then((jsonData) => {
+    d3.json("data/samples.json").then((jsonData) => {
         let initialID = jsonData.samples[0].id;
         console.log(initialID);
         buildplot(initialID);
