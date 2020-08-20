@@ -1,14 +1,15 @@
-// Initialize Selected Bar Chart
+// create dropdown Menu dynamically 
 function dropDwnGen(){
     d3.json("data/samples.json").then((jsonData) => {
-        // console.log(jsonData);
-    
+ 
+        // sample's subject numbers
         const samplesArray = jsonData.names;
-        // console.log(samplesArray);
+        console.log(samplesArray);
 
         //html dropDown selector
         const dropDwnSelect = d3.select("#selDataset");
 
+        //append "option" and value for each subject
         samplesArray.forEach(sample =>{
             const option = dropDwnSelect.append("option");
             option.text(sample).property("value",sample);
@@ -16,38 +17,40 @@ function dropDwnGen(){
     });
 };
 
+// create a buildplot function that will plot all three charts (selected and all subjects)
 function buildplot(sampleID){
     d3.json("data/samples.json").then((jsonData) => {
-        const samples = jsonData.samples;
-        // console.log(samples);
 
+        // First plot : bar chart for selected subject
+        const samples = jsonData.samples;
+        // filter data according to "sampleID" selected from the dropdown menu
         const filteredId = samples.filter(i =>
             i.id.toString() === sampleID
         )
-        // console.log(filteredId);
+        console.log(filteredId);
 
+        //grab sample_values, otu_ids, otu_labels and define the "genusArr"
         const sampleValues = filteredId[0].sample_values.slice(0,10).reverse();
         const otuValues = filteredId[0].otu_ids.slice(0,10).reverse();
         const genusValues = filteredId[0].otu_labels.slice(0,10).reverse();
         const genusArr = genusValues.map(genvalue =>
             genvalue.split(";").slice(-1)
         )
-        // console.log(sampleValues);
-        // console.log(otuValues);
-        // console.log(genusValues);
-        // console.log(genusArr);
+        console.log(sampleValues);
+        console.log(otuValues);
+        console.log(genusValues);
+        console.log(genusArr);
 
         // create an array with "otuValues" and "genusArr"
         const otuGenus = [];
-        
+        //loop over "otuValues" array and passing indexes to correlate "genusArr" indexes
         otuValues.forEach((ov,i) => {
             const ovString = ov + " : " + genusArr[i]
             otuGenus.push(ovString)
         })
-        // console.log(otuGenus);
+        console.log(otuGenus);
 
-        //bar plot with selection
-
+        // define trace , data, layout and plot
         const trace = {
             x: sampleValues,
             y: otuGenus,
@@ -75,7 +78,9 @@ function buildplot(sampleID){
 
         Plotly.newPlot("bar2",data,layout);
 
+        //##############################################################################
         // All subjects Bar Plot
+        //create "otusObject" that stores otu_id:sample_values, and  a "genusObject" that stores otu_id:genus
         const samplesUto = jsonData.samples;
         const otusObject = {};
         const genusObject = {};
@@ -92,10 +97,12 @@ function buildplot(sampleID){
 
             //Loop over each otu_id
             otuIden.forEach((id,i) =>{
+                //validate if the id exists
                 if (id in otusObject){
                 otusObject[id].push(sampleVal[i]);
                 genusObject[id].push(genus[i]);
                 }
+                //initialize the key-value pair
                 else{
                     otusObject[id] = [sampleVal[i]];
                     genusObject[id] = [genus[i]];
@@ -106,7 +113,7 @@ function buildplot(sampleID){
         console.log(otusObject);
         console.log(genusObject);
 
-        //reduce to aggregate sample_values by otu_id
+        //use reduce to aggregate sample_values by otu_id
         const aggOtuObject = {};
         Object.entries(otusObject).forEach(([key,value]) => {
             const reducer = (accumulator, currentValue) => accumulator + currentValue;
@@ -122,14 +129,10 @@ function buildplot(sampleID){
 
         //sort and slice aggOtuValues
         const aggOtuArr = Object.entries(aggOtuObject);
-        console.log(aggOtuArr);
         const sortAggOtuArr = aggOtuArr.sort(function(a, b) {
             return b[1] - a[1];
         });
         const sliceAggOtuArr = sortAggOtuArr.slice(0,10);
-        console.log(sliceAggOtuArr);
-
-        console.log(Object.entries(genusObject));
         
         // adding Genus value within sliceAggOtuArr
         sliceAggOtuArr.forEach(agg => {
@@ -143,7 +146,7 @@ function buildplot(sampleID){
         });
         console.log(sliceAggOtuArr);
 
-        //bar plot with selection
+        //create trace 2, data2, layout2, and plot
 
         const trace2 = {
             x: sliceAggOtuArr.map(agg => agg[1]).reverse(),
@@ -152,6 +155,7 @@ function buildplot(sampleID){
             orientation: "h",
             text: sliceAggOtuArr.map(agg => agg[2]),
         }
+
         const data2 = [trace2];
 
         const layout2 = {
@@ -172,18 +176,22 @@ function buildplot(sampleID){
 
         Plotly.newPlot("bar1",data2,layout2);
 
+        //################################################################################
         //Bubble Chart
+
         //otu_labels for selected subject
         const otuLabel = filteredId[0].otu_labels;
+
         // grab the family
         const otuFam = otuLabel.map(label =>
             label.split(";").slice(0,5));
         const famSampValues = filteredId[0].sample_values;
         console.log(otuFam);
-        console.log(sampleValues);
 
+        //create a object object where "family : sample_value"
         const otuFamObject = {};
-        // loop within otuFam/families to build an object where "family : sample_value"
+
+        // loop within otuFam/families
         otuFam.forEach((fam,i) =>{
             // console.log(famSampValues[i]);
             if (fam in otuFamObject){
@@ -210,16 +218,17 @@ function buildplot(sampleID){
         });
         console.log(aggFamObj);
 
-        //sort aggFamObj
+        //sort "aggFamObj"
         const sortFamArr = Object.entries(aggFamObj).sort((a,b) =>
         {return b[1] - a[1]});
         console.log(sortFamArr);
 
         //create bubble chart
+        //grab family and aggregated sample_values from the resulted arrays
         const familyResult = sortFamArr.map(sortFam => sortFam[0]);
         const sampleValueResult = sortFamArr.map(sortFam => sortFam[1]);
-        console.log(familyResult);
 
+        //create bubbletrace, data3, layout3, and plot
         const bubbleTrace = {
             x: sampleValueResult,
             y: familyResult,
@@ -250,14 +259,16 @@ function buildplot(sampleID){
     });    
 };
 
+//create a function to store "demographic info" by selected subject
 function demographicInfo(sampleID){
     d3.json("data/samples.json").then(res =>{
         const metadataObj = res.metadata;
         console.log(metadataObj);
+        //filter the selected subject
         const filteredMetaObj = metadataObj.filter(metaObj =>
         metaObj.id.toString() === sampleID)
         const demographicInfo = filteredMetaObj[0]
-        // console.log(demographicInfo);
+        console.log(demographicInfo);
         
         // wipe out "Demographic Info" dection every time the subject id is updated
         d3.select("#sample-metadata").text(" ");
@@ -266,30 +277,34 @@ function demographicInfo(sampleID){
         const demographicInfoRef = d3.select("#sample-metadata");
 
         Object.entries(demographicInfo).forEach(([key,value]) =>{
-            const divElem = demographicInfoRef.append("h5")
-            divElem.text(`${key}:${value}`);
+            const divElem = demographicInfoRef.append("div")
+            divElem.html(`<b>${key.toUpperCase()}:
+            ${value}</b>`);
         })
 
     });
 
 };
 
+//Define "optionChanged" function to call buildplot and demographicInfo with the selected sampleID
 function optionChanged(sampleID){
     console.log(sampleID);
     buildplot(sampleID);
     demographicInfo(sampleID);
 }
 
-// init function to render a default chart
+//Create a function that initialize the selected subject plots and demographic info for selected subject, before the user select it from the dropdown menu
 
 function init(){
     d3.json("data/samples.json").then((jsonData) => {
-        let initialID = jsonData.samples[0].id;
+        //define the initial selected subject
+        const initialID = jsonData.samples[0].id;
         console.log(initialID);
         buildplot(initialID);
         demographicInfo(initialID);   
     });
 };
 
+//call functions
 dropDwnGen();
 init();
